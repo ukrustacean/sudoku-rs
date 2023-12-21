@@ -18,8 +18,9 @@ name = "sudoku_rs"
 path = "src/lib.rs"
 
 [features]
-default =["error_cache"]
+default = ["error_cache"]
 error_cache = []
+print_statistics = []
 
 [[bin]]
 name = "sudoku_solver"

@@ -206,6 +206,11 @@ impl Solver {
         let mut temp = self.get_init_temp();
         let mut error = self.get_error();
 
+        #[cfg(feature = "print_statistics")]
+        let mut iteration_count = 0;
+        #[cfg(feature = "print_statistics")]
+        let mut reset_count = 0;
+
         if error <= 0 {
             println!("{}", self);
             return;
@@ -216,6 +221,11 @@ impl Solver {
             // println!("{error}");
 
             for _ in 0..iterations {
+                #[cfg(feature = "print_statistics")]
+                {
+                    iteration_count += 1;
+                }
+
                 #[cfg(not(feature = "error_cache"))]
                 {
                     error = self.change_state(temp);
@@ -235,7 +245,21 @@ impl Solver {
             stuck = if error >= prev_err { stuck + 1 } else { 0 };
             if stuck > 80 {
                 temp += 2.;
+
+                #[cfg(feature = "print_statistics")]
+                {
+                    reset_count += 1;
+                }
             }
+        }
+
+        #[cfg(feature = "print_statistics")]
+        {
+            println!("Statistics");
+            println!("Total iterations:  {iteration_count}");
+            println!("Total resets:      {reset_count}");
+            println!("Final temperature: {temp}");
+            println!()
         }
     }
 }
