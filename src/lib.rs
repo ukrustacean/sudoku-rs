@@ -166,8 +166,25 @@ impl Solver {
         (square, cells, error)
     }
 
+    #[cfg(not(feature = "error_cache"))]
     fn change_state(&mut self, temp: f64) -> i32 {
         let error = self.get_error();
+        let (square, cells, new_error) = self.try_new_state();
+
+        let diff = (error - new_error) as f64;
+
+        let distr = Uniform::new_inclusive(0f64, 1.);
+
+        if self.rng.sample(distr) < (diff / temp).exp() {
+            self.swap_cells(square, cells);
+            new_error
+        } else {
+            error
+        }
+    }
+
+    #[cfg(feature = "error_cache")]
+    fn change_state(&mut self, temp: f64, error: i32) -> i32 {
         let (square, cells, new_error) = self.try_new_state();
 
         let diff = (error - new_error) as f64;
@@ -199,19 +216,26 @@ impl Solver {
             // println!("{error}");
 
             for _ in 0..iterations {
-                error = self.change_state(temp);
+                #[cfg(not(feature = "error_cache"))]
+                {
+                    error = self.change_state(temp);
+                }
+
+                #[cfg(feature = "error_cache")]
+                {
+                    error = self.change_state(temp, error);
+                }
+
                 if error <= 0 {
                     break 'search;
                 }
             }
 
             temp *= 0.99;
-            stuck = if error >= prev_err {
-                stuck + 1
-            } else {
-                0
-            };
-            if stuck > 80 { temp += 2.; }
+            stuck = if error >= prev_err { stuck + 1 } else { 0 };
+            if stuck > 80 {
+                temp += 2.;
+            }
         }
     }
 }
