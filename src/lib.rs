@@ -11,18 +11,18 @@ impl std::fmt::Display for Solver {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for y in 0..9 {
             if y == 3 || y == 6 {
-                writeln!(f, "---------------------")?
+                writeln!(f, "---------------------")?;
             }
 
             for x in 0..9 {
                 if x == 3 || x == 6 {
-                    write!(f, "| ")?
+                    write!(f, "| ")?;
                 }
 
-                write!(f, "{} ", self.get(y, x))?
+                write!(f, "{} ", self.get(y, x))?;
             }
 
-            writeln!(f)?
+            writeln!(f)?;
         }
 
         Ok(())
@@ -37,11 +37,11 @@ impl std::str::FromStr for Solver {
             sudoku: Default::default(),
             map: Default::default(),
             // Seeding with the same number for reproducibility
-            rng: rand::rngs::StdRng::seed_from_u64(0x9C80D33187F07473),
+            rng: rand::rngs::StdRng::seed_from_u64(0x9C80_D331_87F0_7473),
         };
 
         // Represnting sudoku in such a way so that squares 3x3 are rows
-        for (i, c) in s.chars().filter(|x| x.is_ascii_digit()).enumerate() {
+        for (i, c) in s.chars().filter(char::is_ascii_digit).enumerate() {
             let y = i / 9;
             let x = i % 9;
             *result.get_mut(y, x) = (c as i32) - ('0' as i32);
@@ -50,6 +50,28 @@ impl std::str::FromStr for Solver {
         result.map = result.sudoku.map(|r| r.map(|n| n != 0));
 
         Ok(result)
+    }
+}
+
+impl From<&[i32]> for Solver {
+    fn from(value: &[i32]) -> Self {
+        let mut result = Solver {
+            sudoku: Default::default(),
+            map: Default::default(),
+            // Seeding with the same number for reproducibility
+            rng: rand::rngs::StdRng::seed_from_u64(0x9C80_D331_87F0_7473),
+        };
+
+        // Represnting sudoku in such a way so that squares 3x3 are rows
+        for (i, &v) in value.iter().enumerate() {
+            let y = i / 9;
+            let x = i % 9;
+            *result.get_mut(y, x) = v as _;
+        }
+
+        result.map = result.sudoku.map(|r| r.map(|n| n != 0));
+
+        result
     }
 }
 
@@ -99,7 +121,7 @@ impl Solver {
     }
 
     fn fill_random(&mut self) {
-        for square in self.sudoku.iter_mut() {
+        for square in &mut self.sudoku {
             let mut avalaible_numbers = [true; 10];
             avalaible_numbers[0] = false;
 
@@ -136,12 +158,12 @@ impl Solver {
     }
 
     fn swap_cells(&mut self, square: usize, cells: (usize, usize)) {
-        self.sudoku[square].swap(cells.0, cells.1)
+        self.sudoku[square].swap(cells.0, cells.1);
     }
 
     fn get_init_temp(&mut self) -> f64 {
-        let mut population = vec![];
         const N: f64 = 32.0;
+        let mut population = vec![];
 
         for _ in 0..(N as usize) {
             population.push(self.try_new_state().2 as f64);
@@ -152,7 +174,7 @@ impl Solver {
     }
 
     fn get_num_of_iters(&self) -> i32 {
-        self.map.iter().flatten().map(|&x| !x as i32).sum::<i32>()
+        self.map.iter().flatten().map(|&x| i32::from(!x)).sum::<i32>()
     }
 
     fn try_new_state(&mut self) -> (usize, (usize, usize), i32) {
@@ -212,7 +234,7 @@ impl Solver {
         let mut reset_count = 0;
 
         if error <= 0 {
-            println!("{}", self);
+            println!("{self}");
             return;
         }
 
