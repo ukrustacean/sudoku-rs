@@ -174,7 +174,11 @@ impl Solver {
     }
 
     fn get_num_of_iters(&self) -> i32 {
-        self.map.iter().flatten().map(|&x| i32::from(!x)).sum::<i32>()
+        self.map
+            .iter()
+            .flatten()
+            .map(|&x| i32::from(!x))
+            .sum::<i32>()
     }
 
     fn try_new_state(&mut self) -> (usize, (usize, usize), i32) {
